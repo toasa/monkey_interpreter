@@ -39,6 +39,28 @@ let foo = 46;`
     }
 }
 
+func testReturnStatements(t *testing.T) {
+    input := `
+return 0;
+return 46;`
+    l := lexer.New(input)
+    p := New(l)
+
+    program := p.ParseProgram()
+    checkParserErrors(t, p)
+
+    for _, stmt := range program.Statements {
+        rs, ok := stmt.(*ast.ReturnStatement)
+        if !ok {
+            t.Errorf("stmt not *ast.ReturnStatement, got %T", stmt)
+            continue
+        }
+        if rs.TokenLiteral() != "return" {
+            t.Errorf("rs.TokenLiteral() not 'return', got %q", rs.TokenLiteral())
+        }
+    }
+}
+
 func testLetStatement(t *testing.T, stmt ast.Statement, name string) bool {
     if stmt.TokenLiteral() != "let" {
         return false

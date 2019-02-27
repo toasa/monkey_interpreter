@@ -38,7 +38,7 @@ type LetStatement struct {
     // ex. let a = 5 * 5;
     Name *Identifier
     Value Expression
-    Token token.Token
+    Token token.Token // `let` token
 }
 
 // 下2つのメソッドをもって、LetStatement構造体はそれぞれStatementインターフェースと
@@ -48,7 +48,18 @@ func (ls *LetStatement) TokenLiteral() string {
     return ls.Token.Literal
 }
 
-// identifierは値を生成するため式
+type ReturnStatement struct {
+    // return <expression>;
+    Token token.Token // `return` token
+    ReturnValue Expression
+}
+
+func (rs *ReturnStatement) statementNode() {}
+func (rs *ReturnStatement) TokenLiteral() string {
+    return rs.Token.Literal
+}
+
+// identifierは値を生成するため式(expression)
 type Identifier struct {
     Token token.Token
     Value string
