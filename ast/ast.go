@@ -1,14 +1,17 @@
 package ast
 
 import (
+    "bytes"
     "monkey_interpreter/token"
 )
 
 type Node interface {
     // nodeに関連付けられたトークンのリテラル値を返す
     TokenLiteral() string
+    String() string
 }
 
+// let, return, 式文の３種のみ
 type Statement interface {
     Node
     statementNode()
@@ -33,12 +36,22 @@ func (p *Program) TokenLiteral() string {
     }
 }
 
+func (p *Program) String() string {
+    var out bytes.Buffer
+
+    for _, s := range p.Statements {
+        out.WriteString(s.String())
+    }
+
+    return out.String()
+}
+
 type LetStatement struct {
     // let <identifier> = <expression>;
     // ex. let a = 5 * 5;
+    Token token.Token // `let` token
     Name *Identifier
     Value Expression
-    Token token.Token // `let` token
 }
 
 // 下2つのメソッドをもって、LetStatement構造体はそれぞれStatementインターフェースと
@@ -46,6 +59,20 @@ type LetStatement struct {
 func (ls *LetStatement) statementNode() {}
 func (ls *LetStatement) TokenLiteral() string {
     return ls.Token.Literal
+}
+func (ls *LetStatement) String() string {
+    var out bytes.Buffer
+
+    out.WriteString(ls.TokenLiteral() + " ")
+    out.WriteString(ls.Name.String())
+    out.WriteString(" = ")
+
+    if ls.Value != nil {
+        out.WriteString(ls.Value.String())
+    }
+
+    out.WriteString(";")
+    return out.String()
 }
 
 type ReturnStatement struct {
@@ -58,6 +85,34 @@ func (rs *ReturnStatement) statementNode() {}
 func (rs *ReturnStatement) TokenLiteral() string {
     return rs.Token.Literal
 }
+func (rs *ReturnStatement) String() string {
+    var out bytes.Buffer
+
+    out.WriteString(rs.TokenLiteral() + " ")
+    if rs.ReturnValue != nil {
+        out.WriteString(rs.ReturnValue.String())
+    }
+    out.WriteString(";")
+    return out.String()
+}
+
+type ExpressionStatement struct {
+    // <expression>;
+    Token token.Token
+    Expression Expression
+}
+
+func (es *ExpressionStatement) statementNode() {}
+func (es *ExpressionStatement) TokenLiteral() string {
+    return es.Token.Literal
+}
+func (es *ExpressionStatement) String() string {
+
+    if es.Expression != nil {
+        return es.Expression.String()
+    }
+    return ""
+}
 
 // identifierは値を生成するため式(expression)
 type Identifier struct {
@@ -68,4 +123,7 @@ type Identifier struct {
 func (id *Identifier) expressionNode() {}
 func (id *Identifier) TokenLiteral() string {
     return id.Token.Literal
+}
+func (id *Identifier) String() string {
+    return id.Value
 }
