@@ -45,6 +45,8 @@ func New(l *lexer.Lexer) *Parser {
     // どうして識別子がprefixにparseされるの？
     p.registerPrefix(token.IDENT, p.parseIdentifier)
     p.registerPrefix(token.INT, p.parseIntegerLiteral)
+    p.registerPrefix(token.BANG, p.parsePrefixExpression)
+    p.registerPrefix(token.MINUS, p.parsePrefixExpression)
 
     p.nextToken()
     p.nextToken()
@@ -163,6 +165,14 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
         return nil
     }
     return &ast.IntergerLiteral{Token: p.curToken, Value: val}
+}
+
+func (p *Parser) parsePrefixExpression() ast.Expression {
+    pe := &ast.PrefixExpression{Token: p.curToken, Operator: p.curToken.Literal}
+    p.nextToken()
+    pe.Right = p.parseExpression(PREFIX)
+
+    return pe
 }
 
 func (p *Parser) curTokenIs(t token.TokenType) bool {

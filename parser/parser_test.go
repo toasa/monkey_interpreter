@@ -2,6 +2,7 @@ package parser
 
 import (
     "testing"
+    "fmt"
     "monkey_interpreter/ast"
     "monkey_interpreter/lexer"
 )
@@ -153,4 +154,66 @@ func TestIntegerLiteralExpression(t *testing.T) {
     if il.TokenLiteral() != "46" {
         t.Fatalf("incorrect number")
     }
+}
+
+func TestParsingPrefixExpressions(t *testing.T) {
+    prefixTests := []struct {
+        input string
+        operator string
+        integerValue int64
+    }{
+        {"!5;", "!", 5},
+        {"-46;", "-", 46},
+    }
+
+    for _, test := range prefixTests {
+        l := lexer.New(test.input)
+        p := New(l)
+
+        program := p.ParseProgram()
+
+        if len(program.Statements) != 1 {
+            t.Fatalf("incorrect length of program.Statements")
+        }
+
+        stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+
+        if !ok {
+            t.Fatalf("stmt type assertion invalid")
+        }
+
+        pe, ok := stmt.Expression.(*ast.PrefixExpression)
+
+        if !ok {
+            t.Fatalf("type assertion invalid")
+        }
+
+        if pe.Operator != test.operator {
+            t.Fatalf("error")
+        }
+
+        if !testIntegerLiteral(t, pe.Right, test.integerValue) {
+            t.Fatalf("error")
+        }
+    }
+}
+
+func testIntegerLiteral(t *testing.T, exp ast.Expression, val int64) bool {
+    il, ok := exp.(*ast.IntergerLiteral)
+    if !ok {
+        t.Fatalf("invalid type assertion")
+        return false
+    }
+
+    if il.Value != val {
+        t.Fatalf("error")
+        return false
+    }
+
+    if il.TokenLiteral() != fmt.Sprintf("%d", val) {
+        t.Fatalf("error")
+        return false
+    }
+
+    return true
 }
