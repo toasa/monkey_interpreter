@@ -127,3 +127,30 @@ func TestIdentifierExpression(t *testing.T) {
     }
 
 }
+
+func TestIntegerLiteralExpression(t *testing.T) {
+    input := "46;"
+
+    l := lexer.New(input)
+    p := New(l)
+
+    program := p.ParseProgram()
+    stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+
+    if !ok {
+        t.Fatalf("stmt type assertion invalid")
+    }
+
+    il, ok := stmt.Expression.(*ast.IntergerLiteral)
+    if !ok {
+        t.Fatalf("type assetion invalid")
+    }
+
+    if il.Value != 46 {
+        t.Fatalf("incorrect number")
+    }
+
+    if il.TokenLiteral() != "46" {
+        t.Fatalf("incorrect number")
+    }
+}
