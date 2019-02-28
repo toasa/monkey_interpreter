@@ -35,7 +35,6 @@ func (p *Program) TokenLiteral() string {
         return ""
     }
 }
-
 func (p *Program) String() string {
     var out bytes.Buffer
 

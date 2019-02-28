@@ -94,3 +94,36 @@ func checkParserErrors(t *testing.T, p *Parser) {
     }
     t.FailNow()
 }
+
+func TestIdentifierExpression(t *testing.T) {
+    input := "foobar;"
+
+    l := lexer.New(input)
+    p := New(l)
+
+    program := p.ParseProgram()
+    checkParserErrors(t, p)
+
+    if len(program.Statements) != 1 {
+        t.Fatalf("not enough lengtn of statement")
+    }
+
+    stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+    if !ok {
+        t.Fatalf("stmt type assertion invalid")
+    }
+
+    ident, ok := stmt.Expression.(*ast.Identifier)
+    if !ok {
+        t.Fatalf("ident type assertion invalid")
+    }
+
+    if ident.String() != "foobar" {
+        t.Fatalf("false identifier paring")
+    }
+
+    if ident.TokenLiteral() != "foobar" {
+        t.Fatalf("incorrect TokenLiteral()")
+    }
+
+}

@@ -9,16 +9,40 @@ import (
 
 type Parser struct {
     l *lexer.Lexer
+    errors []string
+
     curToken token.Token
     peepToken token.Token
-    errors []string
+
+    prefixParseFns map[token.TokenType]prefixParseFn
+    infixParseFns map[token.TokenType]infixParseFn
 }
+
+type (
+    prefixParseFn func() ast.Expression
+    infixParseFn func(ast.Expression) ast.Expression
+)
+
+const (
+    _ int = iota
+    LOWEST
+    EQUALS // ==
+    LESSGREATER // > or <
+    SUM // +
+    PRODUCT // *
+    PREFIX // -x or !x
+    CALL // func(x)
+)
 
 func New(l *lexer.Lexer) *Parser {
     p := &Parser{
         l: l,
         errors: []string{},
     }
+
+    p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
+    // どうして識別子がprefixにparseされるの？
+    p.registerPrefix(token.IDENT, p.parseIdentifier)
 
     p.nextToken()
     p.nextToken()
@@ -32,7 +56,7 @@ func (p *Parser) Errors() []string {
 
 func (p *Parser) peepError(t token.TokenType) {
     msg := fmt.Sprintf("expected next token to be %s, but got %s instead",
-        t, p.peepToken.Type)
+    t, p.peepToken.Type)
     p.errors = append(p.errors, msg)
 }
 
@@ -51,6 +75,8 @@ func (p *Parser) expectToken(tt token.TokenType) bool {
 
 func (p *Parser) ParseProgram() *ast.Program {
     program := &ast.Program{}
+    // = の右辺値は型([]ast.Statement)ではなく、値を持つ式([]ast.Statement{})でないといけない
+    // 例えば var n = int とはできない
     program.Statements = []ast.Statement{}
 
     for p.curToken.Type != token.EOF {
@@ -70,7 +96,7 @@ func (p *Parser) parseStatement() ast.Statement {
     case token.RETURN:
         return p.parseReturnStatement()
     default:
-        return nil
+        return p.parseExpressionStatement()
     }
 }
 
@@ -101,6 +127,29 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
     return stmt
 }
 
+func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+    stmt := &ast.ExpressionStatement{Token: p.curToken}
+    stmt.Expression = p.parseExpression(LOWEST)
+
+    if p.peepTokenIs(token.SEMICOLON) {
+        p.nextToken()
+    }
+    return stmt
+}
+
+func (p *Parser) parseExpression(precedence int) ast.Expression {
+    pre_fn := p.prefixParseFns[p.curToken.Type]
+    if pre_fn == nil {
+        return nil
+    }
+    leftExp := pre_fn()
+    return leftExp
+}
+
+func (p *Parser) parseIdentifier() ast.Expression {
+    return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+}
+
 func (p *Parser) curTokenIs(t token.TokenType) bool {
     return p.curToken.Type == t
 }
@@ -117,4 +166,13 @@ func (p *Parser) expectPeep(t token.TokenType) bool {
         p.peepError(t)
         return false
     }
+}
+
+// map prefixParseFnsへエントリの追加
+func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
+    p.prefixParseFns[tokenType] = fn
+}
+
+func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
+    p.infixParseFns[tokenType] = fn
 }
