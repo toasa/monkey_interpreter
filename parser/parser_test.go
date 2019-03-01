@@ -136,6 +136,7 @@ func TestIntegerLiteralExpression(t *testing.T) {
     p := New(l)
 
     program := p.ParseProgram()
+    checkParserErrors(t, p)
     stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 
     if !ok {
@@ -171,6 +172,7 @@ func TestParsingPrefixExpressions(t *testing.T) {
         p := New(l)
 
         program := p.ParseProgram()
+        checkParserErrors(t, p)
 
         if len(program.Statements) != 1 {
             t.Fatalf("incorrect length of program.Statements")
@@ -194,6 +196,58 @@ func TestParsingPrefixExpressions(t *testing.T) {
 
         if !testIntegerLiteral(t, pe.Right, test.integerValue) {
             t.Fatalf("error")
+        }
+    }
+}
+
+func TestParsingInfixExpressions(t *testing.T) {
+    intfixTests := []struct {
+        input string
+        lval int64
+        op string
+        rval int64
+    }{
+        {"2 + 3;", 2, "+" , 3},
+        {"2 - 3;", 2, "-" , 3},
+        {"2 * 3;", 2, "*" , 3},
+        {"2 / 3;", 2, "/" , 3},
+        {"2 < 3;", 2, "<" , 3},
+        {"2 > 3;", 2, ">" , 3},
+        {"2 == 3;", 2, "==" , 3},
+        {"2 != 3;", 2, "!=" , 3},
+    }
+
+    for _, test := range intfixTests {
+        l := lexer.New(test.input)
+        p := New(l)
+
+        program := p.ParseProgram()
+        checkParserErrors(t, p)
+
+        if len(program.Statements) != 1 {
+            t.Fatalf("invalid length of stmt")
+        }
+
+        stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+        if !ok {
+            t.Fatalf("type assetion to *ast.ExpressionStatement is invaild")
+        }
+
+        ie, ok := stmt.Expression.(*ast.InfixExpression)
+        if !ok {
+            t.Fatalf("type assetion to *ast.InfixExpression is invalid")
+        }
+
+        if ie.Operator != test.op {
+            t.Fatalf("parsed operator invalid")
+        }
+
+        if !testIntegerLiteral(t, ie.Left, test.lval) {
+            t.Fatalf("parsed left value invalid")
+        }
+
+        if !testIntegerLiteral(t, ie.Right, test.rval) {
+            t.Fatalf("parsed right value invalid")
         }
     }
 }
