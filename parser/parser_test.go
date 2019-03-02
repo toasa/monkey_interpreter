@@ -271,3 +271,57 @@ func testIntegerLiteral(t *testing.T, exp ast.Expression, val int64) bool {
 
     return true
 }
+
+func TestOperatorPrecedenceParsing(t *testing.T) {
+    tests := []struct {
+        input string
+        expected string
+    }{
+        {
+            "-a * b",
+            "((-a) * b)",
+        },
+        {
+            "!-a",
+            "(!(-a))",
+        },
+        {
+            "a +        b + c",
+            "((a + b) + c)",
+        },
+        {
+            "a + b - c",
+            "((a + b) - c)",
+        },
+        {
+            "a + b * c",
+            "(a + (b * c))",
+        },
+        {
+            "a * b + c",
+            "((a * b) + c)",
+        },
+        {
+            "a + b / c",
+            "(a + (b / c))",
+        },
+        {
+            "5 > 4 == 3 < 4",
+            "((5 > 4) == (3 < 4))",
+        },
+        {
+            "2 + 4 * 5 == 6 + 7 * 8 + 9",
+            "((2 + (4 * 5)) == ((6 + (7 * 8)) + 9))",
+        },
+    }
+
+    for _, test := range tests {
+        l := lexer.New(test.input)
+        p := New(l)
+        program := p.ParseProgram()
+        checkParserErrors(t, p)
+        if program.String() != test.expected {
+            t.Fatalf("expected %s, but got %s", test.expected, program.String())
+        }
+    }
+}

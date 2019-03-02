@@ -154,8 +154,10 @@ func (pe *PrefixExpression) TokenLiteral() string {
 func (pe *PrefixExpression) String() string {
     var out bytes.Buffer
 
+    out.WriteString("(")
     out.WriteString(pe.TokenLiteral())
     out.WriteString(pe.Right.String())
+    out.WriteString(")")
 
     return out.String()
 }
@@ -175,9 +177,11 @@ func (ie *InfixExpression) TokenLiteral() string {
 func (ie *InfixExpression) String() string {
     var out bytes.Buffer
 
-    out.WriteString(ie.Left.String())
+    out.WriteString("(")
+    out.WriteString(ie.Left.String() + " ")
     out.WriteString(ie.TokenLiteral())
-    out.WriteString(ie.Right.String())
+    out.WriteString(" " + ie.Right.String())
+    out.WriteString(")")
 
     return out.String()
 }
