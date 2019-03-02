@@ -65,6 +65,7 @@ func New(l *lexer.Lexer) *Parser {
     p.registerPrefix(token.FALSE, p.parseBoolean)
     p.registerPrefix(token.BANG, p.parsePrefixExpression)
     p.registerPrefix(token.MINUS, p.parsePrefixExpression)
+    p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
     p.registerInfix(token.EQ, p.parseInfixExpression)
     p.registerInfix(token.NQ, p.parseInfixExpression)
     p.registerInfix(token.LT, p.parseInfixExpression)
@@ -217,6 +218,20 @@ func (p *Parser) parseBoolean() ast.Expression {
     b.Value = (p.curToken.Literal == "true")
 
     return b
+}
+
+func (p *Parser) parseGroupedExpression() ast.Expression {
+    p.nextToken()
+
+    // parseExpression()内で`)`にぶつかるまで通常の式としてparseされる。
+    // `)`のprecedenceはlowestなので、`)`以降までparseされることはない。
+    ex := p.parseExpression(LOWEST)
+
+    if !p.expectPeep(token.RPAREN) {
+        return nil
+    }
+
+    return ex
 }
 
 func (p *Parser) parsePrefixExpression() ast.Expression {
