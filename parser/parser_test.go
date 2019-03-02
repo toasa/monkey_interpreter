@@ -198,10 +198,12 @@ func TestParsingPrefixExpressions(t *testing.T) {
     prefixTests := []struct {
         input string
         operator string
-        integerValue int64
+        val interface{}
     }{
         {"!5;", "!", 5},
         {"-46;", "-", 46},
+        {"!true;", "!", true},
+        {"!false;", "!", false},
     }
 
     for _, test := range prefixTests {
@@ -231,7 +233,7 @@ func TestParsingPrefixExpressions(t *testing.T) {
             t.Fatalf("error")
         }
 
-        if !testIntegerLiteral(t, pe.Right, test.integerValue) {
+        if !testLiteralExpression(t, pe.Right, test.val) {
             t.Fatalf("error")
         }
     }
@@ -240,9 +242,9 @@ func TestParsingPrefixExpressions(t *testing.T) {
 func TestParsingInfixExpressions(t *testing.T) {
     infixTests := []struct {
         input string
-        lval int64
+        lval interface{}
         op string
-        rval int64
+        rval interface{}
     }{
         {"2 + 3;", 2, "+" , 3},
         {"2 - 3;", 2, "-" , 3},
@@ -252,6 +254,9 @@ func TestParsingInfixExpressions(t *testing.T) {
         {"2 > 3;", 2, ">" , 3},
         {"2 == 3;", 2, "==" , 3},
         {"2 != 3;", 2, "!=" , 3},
+        {"true == true;", true, "==", true},
+        {"false != true;", false, "!=", true},
+        {"false == false;", false, "==", false},
     }
 
     for _, test := range infixTests {
@@ -317,6 +322,21 @@ func testIdentifier(t *testing.T, exp ast.Expression, val string) bool {
     return true
 }
 
+func testBooleanLiteral(t *testing.T, exp ast.Expression, val bool) bool {
+    b, ok := exp.(*ast.Boolean)
+    if !ok {
+        t.Fatalf("invalid type assertion of (*ast.Boolean)")
+        return false
+    }
+
+    if b.Value != val {
+        t.Fatalf("incorrect boolean value")
+        return false
+    }
+
+    return true
+}
+
 func testLiteralExpression(t * testing.T, exp ast.Expression, expected interface{}) bool {
     switch v:= expected.(type) {
     case int:
@@ -325,6 +345,8 @@ func testLiteralExpression(t * testing.T, exp ast.Expression, expected interface
         return testIntegerLiteral(t, exp, v)
     case string:
         return testIdentifier(t, exp, v)
+    case bool:
+        return testBooleanLiteral(t, exp, v)
     }
     t.Errorf("type of expected no handled")
     return false
@@ -397,6 +419,22 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
         {
             "2 + 4 * 5 == 6 + 7 * 8 + 9",
             "((2 + (4 * 5)) == ((6 + (7 * 8)) + 9))",
+        },
+        {
+            "true",
+            "true",
+        },
+        {
+            "false",
+            "false",
+        },
+        {
+            "3 > 5 == false",
+            "((3 > 5) == false)",
+        },
+        {
+            "3 < 5 != true",
+            "((3 < 5) != true)",
         },
     }
 
