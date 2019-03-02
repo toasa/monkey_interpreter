@@ -157,6 +157,43 @@ func TestIntegerLiteralExpression(t *testing.T) {
     }
 }
 
+func TestBooleanExpression(t *testing.T) {
+    tests := []struct {
+        input string
+        val bool
+    }{
+        {"true;", true},
+        {"false;", false},
+    }
+
+    for _, test := range tests {
+        l := lexer.New(test.input)
+        p := New(l)
+
+        program := p.ParseProgram()
+
+        stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+
+        if !ok {
+            t.Fatalf("type assertion error")
+        }
+
+        b, ok := stmt.Expression.(*ast.Boolean)
+
+        if !ok {
+            t.Fatalf("type assertion to Boolean is error")
+        }
+
+        if b.Value != test.val {
+            t.Fatalf("incorrect boolean value")
+        }
+
+        if b.TokenLiteral() != test.input[:len(test.input)-1] {
+            t.Fatalf("incorrect boolean literal")
+        }
+    }
+}
+
 func TestParsingPrefixExpressions(t *testing.T) {
     prefixTests := []struct {
         input string
@@ -233,6 +270,7 @@ func TestParsingInfixExpressions(t *testing.T) {
             t.Fatalf("type assetion to *ast.ExpressionStatement is invaild")
         }
 
+        // テストを整理した
         if !testInfixExpression(t, stmt.Expression, test.lval, test.op, test.rval) {
             t.Fatalf("test of InfixExpression incorrect")
         }

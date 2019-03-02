@@ -61,6 +61,8 @@ func New(l *lexer.Lexer) *Parser {
     // でpre_fn == nilの場合errorとしたいから
     p.registerPrefix(token.IDENT, p.parseIdentifier)
     p.registerPrefix(token.INT, p.parseIntegerLiteral)
+    p.registerPrefix(token.TRUE, p.parseBoolean)
+    p.registerPrefix(token.FALSE, p.parseBoolean)
     p.registerPrefix(token.BANG, p.parsePrefixExpression)
     p.registerPrefix(token.MINUS, p.parsePrefixExpression)
     p.registerInfix(token.EQ, p.parseInfixExpression)
@@ -205,6 +207,18 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
     return &ast.IntergerLiteral{Token: p.curToken, Value: val}
 }
 
+func (p *Parser) parseBoolean() ast.Expression {
+    if !(p.curToken.Literal == "true" || p.curToken.Literal == "false") {
+        p.errors = append(p.errors, "token appeares neither true or false")
+        return nil
+    }
+
+    b := &ast.Boolean{Token: p.curToken}
+    b.Value = (p.curToken.Literal == "true")
+
+    return b
+}
+
 func (p *Parser) parsePrefixExpression() ast.Expression {
     pe := &ast.PrefixExpression{Token: p.curToken, Operator: p.curToken.Literal}
     p.nextToken()
@@ -222,7 +236,7 @@ func (p *Parser) parseInfixExpression(leftExp ast.Expression) ast.Expression {
 
     precedence := p.curPrecedence()
     p.nextToken()
-    
+
     ie.Right = p.parseExpression(precedence)
 
     return ie

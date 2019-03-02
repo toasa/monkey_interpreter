@@ -140,6 +140,19 @@ func (il *IntergerLiteral) String() string {
     return il.Token.Literal
 }
 
+type Boolean struct {
+    Token token.Token
+    Value bool
+}
+
+func (b *Boolean) expressionNode() {}
+func (b *Boolean) TokenLiteral() string {
+    return b.Token.Literal
+}
+func (b *Boolean) String() string {
+    return b.Token.Literal
+}
+
 type PrefixExpression struct {
     // <prefix operator><expression>;
     Token token.Token // token of `!` or `-`
