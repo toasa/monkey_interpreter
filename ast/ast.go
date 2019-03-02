@@ -113,6 +113,25 @@ func (es *ExpressionStatement) String() string {
     return ""
 }
 
+type BlockStatement struct {
+    Token token.Token
+    Statements []Statement
+}
+
+func (bs *BlockStatement) statementNode() {}
+func (bs *BlockStatement) TokenLiteral() string {
+    return bs.Token.Literal
+}
+func (bs *BlockStatement) String() string {
+    var out bytes.Buffer
+
+    for _, stmt := range bs.Statements {
+        out.WriteString(stmt.String())
+    }
+
+    return out.String()
+}
+
 // identifierは値を生成するため式(expression)
 type Identifier struct {
     Token token.Token
@@ -154,7 +173,7 @@ func (b *Boolean) String() string {
 }
 
 type PrefixExpression struct {
-    // <prefix operator><expression>;
+    // <prefix operator><expression>
     Token token.Token // token of `!` or `-`
     Operator string
     Right Expression
@@ -176,7 +195,7 @@ func (pe *PrefixExpression) String() string {
 }
 
 type InfixExpression struct {
-    // <expression><infix operator><expression>;
+    // <expression><infix operator><expression>
     Token token.Token
     Left Expression
     Operator string
@@ -195,6 +214,33 @@ func (ie *InfixExpression) String() string {
     out.WriteString(ie.TokenLiteral())
     out.WriteString(" " + ie.Right.String())
     out.WriteString(")")
+
+    return out.String()
+}
+
+type IfExpression struct {
+    // if (<condition>) { <consequence> } else { <alternative> }
+    Token token.Token
+    Cond Expression
+    Cons *BlockStatement
+    Alt *BlockStatement
+}
+
+func (ie *IfExpression) expressionNode() {}
+func (ie *IfExpression) TokenLiteral() string {
+    return ie.Token.Literal
+}
+func (ie *IfExpression) String() string {
+    var out bytes.Buffer
+
+    out.WriteString(ie.TokenLiteral())
+    out.WriteString(ie.Cond.String())
+    out.WriteString(" ")
+    out.WriteString(ie.Cons.String())
+    if ie.Alt != nil {
+        out.WriteString("else")
+        out.WriteString(ie.Alt.String())
+    }
 
     return out.String()
 }

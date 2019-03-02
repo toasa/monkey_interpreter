@@ -145,7 +145,7 @@ func TestIntegerLiteralExpression(t *testing.T) {
 
     il, ok := stmt.Expression.(*ast.IntergerLiteral)
     if !ok {
-        t.Fatalf("type assetion invalid")
+        t.Fatalf("type assertion invalid")
     }
 
     if il.Value != 46 {
@@ -272,13 +272,99 @@ func TestParsingInfixExpressions(t *testing.T) {
 
         stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
         if !ok {
-            t.Fatalf("type assetion to *ast.ExpressionStatement is invaild")
+            t.Fatalf("type assertion to *ast.ExpressionStatement is invaild")
         }
 
         // テストを整理した
         if !testInfixExpression(t, stmt.Expression, test.lval, test.op, test.rval) {
             t.Fatalf("test of InfixExpression incorrect")
         }
+    }
+}
+
+func TestIfExpression(t *testing.T) {
+    input := "if (x < y) { x }"
+
+    l := lexer.New(input)
+    p := New(l)
+    program := p.ParseProgram()
+    checkParserErrors(t, p)
+
+    if len(program.Statements) != 1 {
+        t.Fatalf("length of parsed program.Statements is invalid")
+    }
+
+    es, ok := program.Statements[0].(*ast.ExpressionStatement)
+    if !ok {
+        t.Fatalf("type assertion error")
+    }
+
+    ie, ok := es.Expression.(*ast.IfExpression)
+    if ie.TokenLiteral() != "if" {
+        t.Fatalf("token literal error")
+    }
+
+    if !testInfixExpression(t, ie.Cond, "x", "<", "y") {
+        t.Fatalf("ie.Cond invalid form")
+    }
+
+    cons, ok := ie.Cons.Statements[0].(*ast.ExpressionStatement)
+
+    if !ok {
+        t.Fatalf("type assertion error")
+    }
+
+    if !testIdentifier(t, cons.Expression, "x") {
+        t.Fatalf("consequence parsing failure")
+    }
+
+    if ie.Alt != nil {
+        t.Errorf("error")
+    }
+}
+
+func TestIfElseExpression(t *testing.T) {
+    input := "if (x < y) { x } else { y }"
+
+    l := lexer.New(input)
+    p := New(l)
+    program := p.ParseProgram()
+    checkParserErrors(t, p)
+
+    if len(program.Statements) != 1 {
+        t.Fatalf("length of parsed program.Statements is invalid")
+    }
+
+    es, ok := program.Statements[0].(*ast.ExpressionStatement)
+    if !ok {
+        t.Fatalf("type assertion error")
+    }
+
+    ie, ok := es.Expression.(*ast.IfExpression)
+    if ie.TokenLiteral() != "if" {
+        t.Fatalf("token literal error")
+    }
+
+    if !testInfixExpression(t, ie.Cond, "x", "<", "y") {
+        t.Fatalf("ie.Cond invalid form")
+    }
+
+    cons, ok := ie.Cons.Statements[0].(*ast.ExpressionStatement)
+    if !ok {
+        t.Fatalf("type assertion error")
+    }
+
+    if !testIdentifier(t, cons.Expression, "x") {
+        t.Fatalf("parsing of consequence statements is failure")
+    }
+
+    alt, ok := ie.Alt.Statements[0].(*ast.ExpressionStatement)
+    if !ok {
+        t.Fatalf("type assertion error")
+    }
+
+    if !testIdentifier(t, alt.Expression, "y") {
+        t.Fatalf("parsing of alternative statements is failure")
     }
 }
 
