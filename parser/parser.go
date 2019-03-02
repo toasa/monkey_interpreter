@@ -222,6 +222,7 @@ func (p *Parser) parseInfixExpression(leftExp ast.Expression) ast.Expression {
 
     precedence := p.curPrecedence()
     p.nextToken()
+    
     ie.Right = p.parseExpression(precedence)
 
     return ie
