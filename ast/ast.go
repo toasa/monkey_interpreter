@@ -287,9 +287,12 @@ func (fc *FunctionCall) String() string {
 
     out.WriteString(fc.Func.String())
     out.WriteString("(")
-    for _, arg := range fc.Args {
+    for i, arg := range fc.Args {
         out.WriteString(arg.String())
-        out.WriteString(", ")
+        // 工夫：複数の引数がある場合カンマをつけ、かつ最後の引数の後にはカンマをつけない
+        if len(fc.Args) > 1 && i + 1 != len(fc.Args){
+            out.WriteString(", ")
+        }
     }
     out.WriteString(")")
 
