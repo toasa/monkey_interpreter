@@ -368,6 +368,87 @@ func TestIfElseExpression(t *testing.T) {
     }
 }
 
+func TestFunctionLiteralParsing(t *testing.T) {
+    input := "fn(x, y) { x + y; }"
+
+    l := lexer.New(input)
+    p := New(l)
+    program := p.ParseProgram()
+    checkParserErrors(t, p)
+
+    stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+    if !ok {
+        t.Fatalf("type assertion error")
+    }
+
+    fl, ok := stmt.Expression.(*ast.FunctionLiteral)
+    if !ok {
+        t.Fatalf("type assertion error")
+    }
+
+    param0 := fl.Params[0]
+    if !testIdentifier(t, param0, "x") {
+        t.Fatalf("parsing parameter error")
+    }
+
+    param1 := fl.Params[1]
+    if !testIdentifier(t, param1, "y") {
+        t.Fatalf("parsing parameter error")
+    }
+
+    es, ok := fl.Body.Statements[0].(*ast.ExpressionStatement)
+    if !ok {
+        t.Fatalf("type assertion error")
+    }
+
+    testInfixExpression(t, es.Expression, "x", "+", "y")
+}
+
+func TestFunctionParameterParsing(t *testing.T) {
+    tests := []struct {
+        input string
+        expectParams []string
+    }{
+        {
+            input: "fn() {};",
+            expectParams: []string{},
+        },
+        {
+            input: "fn(x) {};",
+            expectParams: []string{"x"},
+        },
+        {
+            input: "fn(x, y, z) {};",
+            expectParams: []string{"x", "y", "z"},
+        },
+    }
+
+    for _, test := range tests {
+        l := lexer.New(test.input)
+        p := New(l)
+        program := p.ParseProgram()
+        checkParserErrors(t, p)
+
+        es, ok := program.Statements[0].(*ast.ExpressionStatement)
+        if !ok {
+            t.Fatalf("type assertion error")
+        }
+
+        fl, ok := es.Expression.(*ast.FunctionLiteral)
+        if !ok {
+            t.Fatalf("type assertion error")
+        }
+
+        if len(fl.Params) != len(test.expectParams) {
+            t.Fatalf("params num incorrect")
+        }
+
+        for i, ident := range test.expectParams {
+            testLiteralExpression(t, fl.Params[i] ,ident)
+        }
+    }
+}
+
 func testIntegerLiteral(t *testing.T, exp ast.Expression, val int64) bool {
     il, ok := exp.(*ast.IntergerLiteral)
     if !ok {
@@ -396,12 +477,12 @@ func testIdentifier(t *testing.T, exp ast.Expression, val string) bool {
     }
 
     if id.Value != val {
-        t.Fatalf("incorrect identifier value")
+        t.Fatalf("incorrect identifier value: %s expected, but got %s", val, id.Value)
         return false
     }
 
     if id.TokenLiteral() != val {
-        t.Fatalf("incorrect identifier value")
+        t.Fatalf("incorrect identifier token literal")
         return false
     }
 

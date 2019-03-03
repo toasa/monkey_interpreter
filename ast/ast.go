@@ -244,3 +244,28 @@ func (ie *IfExpression) String() string {
 
     return out.String()
 }
+
+type FunctionLiteral struct {
+    // fn <parameters> <block statement>
+    Token token.Token
+    Params []*Identifier
+    Body *BlockStatement
+}
+
+func (fl *FunctionLiteral) expressionNode() {}
+func (fl *FunctionLiteral) TokenLiteral() string {
+    return fl.Token.Literal
+}
+func (fl *FunctionLiteral) String() string {
+    var out bytes.Buffer
+
+    out.WriteString(fl.TokenLiteral())
+    out.WriteString("(")
+    for _, param := range fl.Params {
+        out.WriteString(param.String())
+    }
+
+    out.WriteString(")")
+    out.WriteString(fl.Body.String())
+    return out.String()
+}

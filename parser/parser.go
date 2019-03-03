@@ -67,6 +67,7 @@ func New(l *lexer.Lexer) *Parser {
     p.registerPrefix(token.MINUS, p.parsePrefixExpression)
     p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
     p.registerPrefix(token.IF, p.parseIfExpression)
+    p.registerPrefix(token.FUNCTION, p.parseFunctionLiteral)
     p.registerInfix(token.EQ, p.parseInfixExpression)
     p.registerInfix(token.NQ, p.parseInfixExpression)
     p.registerInfix(token.LT, p.parseInfixExpression)
@@ -272,6 +273,48 @@ func (p *Parser) parseIfExpression() ast.Expression {
 
     return ie
 
+}
+
+func (p *Parser) parseFunctionParams() []*ast.Identifier {
+    params := []*ast.Identifier{}
+    p.nextToken()
+    if p.curTokenIs(token.RPAREN) {
+        p.nextToken()
+        return params
+    }
+
+    for !p.curTokenIs(token.RPAREN) && !p.curTokenIs(token.EOF) {
+        id, ok := p.parseIdentifier().(*ast.Identifier)
+        if !ok {
+            p.errors = append(p.errors, "type assertion to (*ast.identifier) error")
+        }
+        params = append(params, id)
+
+        if p.peepTokenIs(token.COMMA) {
+            p.nextToken()
+        }
+
+        p.nextToken()
+    }
+
+    p.nextToken()
+
+    return params
+}
+
+func (p *Parser) parseFunctionLiteral() ast.Expression {
+    fl := &ast.FunctionLiteral{Token: p.curToken}
+    p.expectPeep(token.LPAREN)
+
+    fl.Params = p.parseFunctionParams()
+
+    if p.peepTokenIs(token.RBRACE) {
+        p.nextToken()
+        return fl
+    }
+    fl.Body = p.parseBlockStatement()
+
+    return fl
 }
 
 func (p *Parser) parsePrefixExpression() ast.Expression {
