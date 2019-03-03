@@ -6,6 +6,7 @@ import (
     "io"
     "monkey_interpreter/lexer"
     "monkey_interpreter/parser"
+    "monkey_interpreter/eval"
 )
 
 const PROMPT = ">>> "
@@ -33,8 +34,11 @@ func Start(in io.Reader, out io.Writer) {
             printParserErrors(out, p.Errors())
         }
 
-        io.WriteString(out, program.String())
-        io.WriteString(out, "\n")
+        evaled := eval.Eval(program)
+        if evaled != nil {
+            io.WriteString(out, evaled.Inspect())
+            io.WriteString(out, "\n")
+        }
     }
 }
 
