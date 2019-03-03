@@ -67,10 +67,9 @@ func evalPrefixExpression(op string, right object.Object) object.Object {
 }
 
 func evalInfixExpression(op string, left, right object.Object) object.Object {
+    lval := left.(*object.Integer).Value
+    rval := right.(*object.Integer).Value
     if (op == "+" || op == "-" || op == "*" || op == "/") {
-        lval := left.(*object.Integer).Value
-        rval := right.(*object.Integer).Value
-
         var val int64
         if (op == "+") {
             val = lval + rval
@@ -84,7 +83,18 @@ func evalInfixExpression(op string, left, right object.Object) object.Object {
 
         return &object.Integer{Value: val}
     }
-    return NULL
+
+    var res bool
+    if (op == "==") {
+        res = (lval == rval)
+    } else if (op == "!=") {
+        res = (lval != rval)
+    } else if (op == "<") {
+        res = (lval < rval)
+    } else if (op == ">") {
+        res = (lval > rval)
+    }
+    return &object.Boolean{Value: res}
 }
 
 func evalBangOperatorExpression(exp object.Object) object.Object {
