@@ -449,6 +449,32 @@ func TestFunctionParameterParsing(t *testing.T) {
     }
 }
 
+func TestFunctionCallParsing(t *testing.T) {
+    //input := "fn(x, y) { x + y; }(3, 6)"
+    input := "add(1, 2 * 3, 4 + 5)"
+
+    l := lexer.New(input)
+    p := New(l)
+    program := p.ParseProgram()
+    checkParserErrors(t, p)
+
+    es, ok := program.Statements[0].(*ast.ExpressionStatement)
+    if !ok {
+        t.Fatalf("type assertion error")
+    }
+
+    fc, ok := es.Expression.(*ast.FunctionCall)
+    if !ok {
+        t.Fatalf("type assertion error")
+    }
+
+    testIdentifier(t, fc.Func, "add")
+
+    testIntegerLiteral(t, fc.Args[0], 1)
+    testInfixExpression(t, fc.Args[1], 2, "*", 3)
+    testInfixExpression(t, fc.Args[2], 4, "+", 5)
+}
+
 func testIntegerLiteral(t *testing.T, exp ast.Expression, val int64) bool {
     il, ok := exp.(*ast.IntergerLiteral)
     if !ok {

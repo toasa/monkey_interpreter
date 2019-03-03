@@ -44,6 +44,8 @@ var precedences = map[token.TokenType]int {
     token.MINUS: SUM,
     token.MUL: PRODUCT,
     token.DIV: PRODUCT,
+    // 中置記法としての`(`. 関数呼び出しに用いられる
+    token.LPAREN: CALL,
 }
 
 func New(l *lexer.Lexer) *Parser {
@@ -76,6 +78,10 @@ func New(l *lexer.Lexer) *Parser {
     p.registerInfix(token.MINUS, p.parseInfixExpression)
     p.registerInfix(token.MUL, p.parseInfixExpression)
     p.registerInfix(token.DIV, p.parseInfixExpression)
+    // 関数呼び出しは add(2, 5); となるが
+    // addはprefixのIdentifierとしてparseされ、
+    // `(`が来て、引数2へと続く。つまり`(`を中置記号とも見なせる
+    p.registerInfix(token.LPAREN, p.parseFunctionCall)
 
     p.nextToken()
     p.nextToken()
@@ -275,7 +281,8 @@ func (p *Parser) parseIfExpression() ast.Expression {
 
 }
 
-func (p *Parser) parseFunctionParams() []*ast.Identifier {
+func (p *Parser) parseFunctionLiteralParams() []*ast.Identifier {
+
     params := []*ast.Identifier{}
     p.nextToken()
     if p.curTokenIs(token.RPAREN) {
@@ -293,7 +300,6 @@ func (p *Parser) parseFunctionParams() []*ast.Identifier {
         if p.peepTokenIs(token.COMMA) {
             p.nextToken()
         }
-
         p.nextToken()
     }
 
@@ -306,7 +312,7 @@ func (p *Parser) parseFunctionLiteral() ast.Expression {
     fl := &ast.FunctionLiteral{Token: p.curToken}
     p.expectPeep(token.LPAREN)
 
-    fl.Params = p.parseFunctionParams()
+    fl.Params = p.parseFunctionLiteralParams()
 
     if p.peepTokenIs(token.RBRACE) {
         p.nextToken()
@@ -315,6 +321,33 @@ func (p *Parser) parseFunctionLiteral() ast.Expression {
     fl.Body = p.parseBlockStatement()
 
     return fl
+}
+
+func (p *Parser) parseFunctionCallArgs() []ast.Expression {
+    fca := []ast.Expression{}
+
+    p.nextToken()
+
+    if p.curTokenIs(token.RPAREN) {
+        return fca
+    }
+
+    for !p.curTokenIs(token.RPAREN) && !p.curTokenIs(token.EOF) {
+        exp := p.parseExpression(LOWEST)
+        fca = append(fca, exp)
+        if p.peepTokenIs(token.COMMA) {
+            p.nextToken()
+        }
+        p.nextToken()
+    }
+
+    return fca
+}
+
+func (p *Parser) parseFunctionCall(f ast.Expression) ast.Expression {
+    fc := &ast.FunctionCall{Token: p.curToken, Func: f}
+    fc.Args = p.parseFunctionCallArgs()
+    return fc
 }
 
 func (p *Parser) parsePrefixExpression() ast.Expression {

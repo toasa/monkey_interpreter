@@ -247,6 +247,7 @@ func (ie *IfExpression) String() string {
 
 type FunctionLiteral struct {
     // fn <parameters> <block statement>
+    // 関数リテラルは関数定義に用いられるため、parametersには*Identifier型しか来ない
     Token token.Token
     Params []*Identifier
     Body *BlockStatement
@@ -267,5 +268,30 @@ func (fl *FunctionLiteral) String() string {
 
     out.WriteString(")")
     out.WriteString(fl.Body.String())
+    return out.String()
+}
+
+type FunctionCall struct {
+    // <expression>(<comma separated expressions>)
+    Token token.Token // '(' token
+    Func Expression // Identifier or FunctionLiteral
+    Args []Expression
+}
+
+func (fc *FunctionCall) expressionNode() {}
+func (fc *FunctionCall) TokenLiteral() string {
+    return fc.Token.Literal
+}
+func (fc *FunctionCall) String() string {
+    var out bytes.Buffer
+
+    out.WriteString(fc.Func.String())
+    out.WriteString("(")
+    for _, arg := range fc.Args {
+        out.WriteString(arg.String())
+        out.WriteString(", ")
+    }
+    out.WriteString(")")
+
     return out.String()
 }
