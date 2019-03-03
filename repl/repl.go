@@ -10,6 +10,9 @@ import (
 
 const PROMPT = ">>> "
 
+
+// バグあり
+// 例えば、`let a 46`と入力した時、panic runtime errorが起こり、replが終了してしまう
 func Start(in io.Reader, out io.Writer) {
     scanner := bufio.NewScanner(in)
 
