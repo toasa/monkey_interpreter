@@ -8,57 +8,61 @@ import (
 )
 
 func TestLetStatements(t *testing.T) {
-    input := `
-let x = 5;
-let y = 10;
-let foo = 46;`
-
-    l := lexer.New(input)
-    // package がparserのため, parser.go内のNew関数を呼ぶ
-    p := New(l)
-
-    program := p.ParseProgram()
-    checkParserErrors(t, p)
-
-    if program == nil {
-        t.Fatalf("parseProgram() returns nil")
-    }
-
     tests := []struct {
+        input string
         expectedIdentifier string
+        expectedValue interface{}
     }{
-        {"x"},
-        {"y"},
-        {"foo"},
+        {"let x = 5;", "x", 5},
+        {"let y = true;", "y", true},
+        {"let foo = y;", "foo", "y"},
     }
 
-    for i, tt := range tests {
-        stmt := program.Statements[i]
-        if !testLetStatement(t, stmt, tt.expectedIdentifier) {
-            return
+    for _, test := range tests {
+        l := lexer.New(test.input)
+        // package がparserのため, parser.go内のNew関数を呼ぶ
+        p := New(l)
+        program := p.ParseProgram()
+        checkParserErrors(t, p)
+
+        if program == nil {
+            t.Fatalf("parseProgram() returns nil")
         }
+
+        testLetStatement(t, program.Statements[0], test.expectedIdentifier)
+
+        ls := program.Statements[0].(*ast.LetStatement)
+        testLiteralExpression(t, ls.Value, test.expectedValue)
     }
 }
 
-func testReturnStatements(t *testing.T) {
-    input := `
-return 0;
-return 46;`
-    l := lexer.New(input)
-    p := New(l)
+func TestReturnStatements(t *testing.T) {
+    tests := []struct {
+        input string
+        expectedVal interface{}
+    }{
+        {"return 5;", 5},
+        {"return true;", true},
+        {"return y;", "y"},
+    }
 
-    program := p.ParseProgram()
-    checkParserErrors(t, p)
+    for _, test := range tests {
+        l := lexer.New(test.input)
+        // package がparserのため, parser.go内のNew関数を呼ぶ
+        p := New(l)
+        program := p.ParseProgram()
+        checkParserErrors(t, p)
 
-    for _, stmt := range program.Statements {
-        rs, ok := stmt.(*ast.ReturnStatement)
+        if program == nil {
+            t.Fatalf("parseProgram() returns nil")
+        }
+
+        rs, ok := program.Statements[0].(*ast.ReturnStatement)
         if !ok {
-            t.Errorf("stmt not *ast.ReturnStatement, got %T", stmt)
-            continue
+            t.Fatalf("type assertion to *ast.ReturnStatement is incorrect")
         }
-        if rs.TokenLiteral() != "return" {
-            t.Errorf("rs.TokenLiteral() not 'return', got %q", rs.TokenLiteral())
-        }
+
+        testLiteralExpression(t, rs.ReturnValue, test.expectedVal)
     }
 }
 
