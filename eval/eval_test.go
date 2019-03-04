@@ -103,6 +103,14 @@ func TestReturnStatements(t *testing.T) {
         {"return 10; 9;", 10},
         {"return 2 * 5; 9;", 10},
         {"11; return 2 * 5; 9;", 10},
+        {"10;11; 12;", 12},
+        {`
+        if (10 > 1) {
+            if (10 > 1) {
+                return 10;
+            }
+            return 1;
+        }`, 10},
     }
 
     for _, test := range tests {

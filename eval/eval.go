@@ -14,7 +14,7 @@ var (
 func Eval(node ast.Node) object.Object {
     switch node := node.(type) {
     case *ast.Program:
-        return evalStatements(node.Statements)
+        return evalProgram(node)
 
     case *ast.ReturnStatement:
         val := Eval(node.ReturnValue)
@@ -24,7 +24,7 @@ func Eval(node ast.Node) object.Object {
         return Eval(node.Expression)
 
     case *ast.BlockStatement:
-        return evalStatements(node.Statements)
+        return evalBlockStatement(node)
 
     case *ast.IntergerLiteral:
         return &object.Integer{Value: node.Value}
@@ -61,14 +61,27 @@ func Eval(node ast.Node) object.Object {
     return nil
 }
 
-func evalStatements(stmts []ast.Statement) object.Object {
+func evalProgram(program *ast.Program) object.Object {
     var res object.Object
 
-    for _, stmt := range stmts {
+    for _, stmt := range program.Statements {
         res = Eval(stmt)
-        rv, ok := res.(*object.ReturnValue)
-        if ok {
+        if rv, ok := res.(*object.ReturnValue); ok {
             return rv.Value
+        }
+    }
+
+    return res
+}
+
+func evalBlockStatement(bs *ast.BlockStatement) object.Object {
+    var res object.Object
+
+    for _, stmt := range bs.Statements {
+        res = Eval(stmt)
+
+        if res != nil && res.Type() == object.RETURN_VALUE_OBJ {
+            return res
         }
     }
     return res
