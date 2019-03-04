@@ -19,8 +19,29 @@ func Eval(node ast.Node) object.Object {
     case *ast.ExpressionStatement:
         return Eval(node.Expression)
 
+    case *ast.BlockStatement:
+        return evalStatements(node.Statements)
+
     case *ast.IntergerLiteral:
         return &object.Integer{Value: node.Value}
+
+    case *ast.Boolean:
+        if node.Value {
+            return TRUE
+        }
+        return FALSE
+
+    case *ast.IfExpression:
+        cond := Eval(node.Cond)
+
+        if isTruthly(cond) {
+            return Eval(node.Cons)
+        } else {
+            if node.Alt != nil {
+                return Eval(node.Alt)
+            }
+        }
+        return NULL
 
     case *ast.PrefixExpression:
         right := Eval(node.Right)
@@ -31,12 +52,6 @@ func Eval(node ast.Node) object.Object {
         right := Eval(node.Right)
         op := node.Operator
         return evalInfixExpression(op, left, right)
-
-    case *ast.Boolean:
-        if node.Value {
-            return TRUE
-        }
-        return FALSE
     }
 
     return nil
@@ -94,7 +109,11 @@ func evalInfixExpression(op string, left, right object.Object) object.Object {
     } else if (op == ">") {
         res = (lval > rval)
     }
-    return &object.Boolean{Value: res}
+
+    if res {
+        return TRUE
+    }
+    return FALSE
 }
 
 func evalBangOperatorExpression(exp object.Object) object.Object {
@@ -118,4 +137,19 @@ func evalMinusPrefixOperatorExpression(exp object.Object) object.Object {
 
     i.Value = -i.Value
     return i
+}
+
+func isTruthly(cond object.Object) bool {
+
+    // monkey言語においてNULLオブジェクトとFALSEオブジェクト以外は、trueとなる
+    switch cond {
+    case NULL:
+        return false
+    case FALSE:
+        return false
+    case TRUE:
+        return true
+    default:
+        return true
+    }
 }
