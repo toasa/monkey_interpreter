@@ -80,6 +80,7 @@ func TestIfElseExpression(t *testing.T) {
         {"if (1>2) { 10 }", nil},
         {"if (1<2) { 10 } else { 20 }", 10},
         {"if (1>2) { 10 } else { 20 }", 20},
+        {"if (1+2+3 == 1*2*3) { 10 } else { 20 }", 10},
     }
 
     for _, test := range tests {
@@ -90,6 +91,23 @@ func TestIfElseExpression(t *testing.T) {
         } else {
             testNullObject(t, evaled)
         }
+    }
+}
+
+func TestReturnStatements(t *testing.T) {
+    tests := []struct {
+        input string
+        expected int64
+    }{
+        {"return 10;", 10},
+        {"return 10; 9;", 10},
+        {"return 2 * 5; 9;", 10},
+        {"11; return 2 * 5; 9;", 10},
+    }
+
+    for _, test := range tests {
+        evaled := testEval(test.input)
+        testIntegerObject(t, evaled, test.expected)
     }
 }
 
@@ -109,7 +127,7 @@ func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {
     }
 
     if i.Value != expected {
-        t.Errorf("object has incorrect value")
+        t.Errorf("%d expected, but got %d", expected, i.Value)
         return false
     }
 

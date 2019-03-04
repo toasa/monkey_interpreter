@@ -16,6 +16,10 @@ func Eval(node ast.Node) object.Object {
     case *ast.Program:
         return evalStatements(node.Statements)
 
+    case *ast.ReturnStatement:
+        val := Eval(node.ReturnValue)
+        return &object.ReturnValue{Value: val}
+
     case *ast.ExpressionStatement:
         return Eval(node.Expression)
 
@@ -58,17 +62,16 @@ func Eval(node ast.Node) object.Object {
 }
 
 func evalStatements(stmts []ast.Statement) object.Object {
+    var res object.Object
+
     for _, stmt := range stmts {
-        switch stmt := stmt.(type) {
-        case *ast.LetStatement:
-        case *ast.ReturnStatement:
-        case *ast.ExpressionStatement:
-            return Eval(stmt)
-        // case *ast BlockStatement:
-        //     return evalStatements(stmt.Statements)
+        res = Eval(stmt)
+        rv, ok := res.(*object.ReturnValue)
+        if ok {
+            return rv.Value
         }
     }
-    return nil
+    return res
 }
 
 func evalPrefixExpression(op string, right object.Object) object.Object {
