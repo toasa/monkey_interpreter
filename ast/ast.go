@@ -146,16 +146,16 @@ func (id *Identifier) String() string {
     return id.Value
 }
 
-type IntergerLiteral struct {
+type IntegerLiteral struct {
     Token token.Token
     Value int64
 }
 
-func (il *IntergerLiteral) expressionNode() {}
-func (il *IntergerLiteral) TokenLiteral() string {
+func (il *IntegerLiteral) expressionNode() {}
+func (il *IntegerLiteral) TokenLiteral() string {
     return il.Token.Literal
 }
-func (il *IntergerLiteral) String() string {
+func (il *IntegerLiteral) String() string {
     return il.Token.Literal
 }
 

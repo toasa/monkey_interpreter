@@ -147,7 +147,7 @@ func TestIntegerLiteralExpression(t *testing.T) {
         t.Fatalf("stmt type assertion invalid")
     }
 
-    il, ok := stmt.Expression.(*ast.IntergerLiteral)
+    il, ok := stmt.Expression.(*ast.IntegerLiteral)
     if !ok {
         t.Fatalf("type assertion invalid")
     }
@@ -480,7 +480,7 @@ func TestFunctionCallParsing(t *testing.T) {
 }
 
 func testIntegerLiteral(t *testing.T, exp ast.Expression, val int64) bool {
-    il, ok := exp.(*ast.IntergerLiteral)
+    il, ok := exp.(*ast.IntegerLiteral)
     if !ok {
         t.Fatalf("invalid type assertion")
         return false

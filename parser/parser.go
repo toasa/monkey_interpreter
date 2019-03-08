@@ -237,7 +237,7 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
         p.errors = append(p.errors, msg)
         return nil
     }
-    return &ast.IntergerLiteral{Token: p.curToken, Value: val}
+    return &ast.IntegerLiteral{Token: p.curToken, Value: val}
 }
 
 func (p *Parser) parseBoolean() ast.Expression {

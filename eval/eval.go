@@ -26,7 +26,7 @@ func Eval(node ast.Node) object.Object {
     case *ast.BlockStatement:
         return evalBlockStatement(node)
 
-    case *ast.IntergerLiteral:
+    case *ast.IntegerLiteral:
         return &object.Integer{Value: node.Value}
 
     case *ast.Boolean:
