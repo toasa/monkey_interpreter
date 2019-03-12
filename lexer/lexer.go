@@ -104,7 +104,7 @@ func (l *Lexer) readIdentifier() string {
     var start int = l.position
     var i int = start
     l.readChar()
-    for isLetter(l.ch) {
+    for isLetter(l.ch) || isDigit(l.ch) {
         i++
         l.readChar()
     }
