@@ -6,6 +6,7 @@ import (
     "io"
     "monkey_interpreter/lexer"
     "monkey_interpreter/parser"
+    "monkey_interpreter/object"
     "monkey_interpreter/eval"
 )
 
@@ -16,6 +17,7 @@ const PROMPT = ">>> "
 // 例えば、`let a 46`と入力した時、panic runtime errorが起こり、replが終了してしまう
 func Start(in io.Reader, out io.Writer) {
     scanner := bufio.NewScanner(in)
+    env := object.NewEnv()
 
     for {
         fmt.Printf(PROMPT)
@@ -34,7 +36,7 @@ func Start(in io.Reader, out io.Writer) {
             printParserErrors(out, p.Errors())
         }
 
-        evaled := eval.Eval(program)
+        evaled := eval.Eval(program, env)
         if evaled != nil {
             io.WriteString(out, evaled.Inspect())
             io.WriteString(out, "\n")

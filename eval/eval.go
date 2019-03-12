@@ -12,26 +12,40 @@ var (
     NULL = &object.Null{}
 )
 
-func Eval(node ast.Node) object.Object {
+func Eval(node ast.Node, env *object.Env) object.Object {
     switch node := node.(type) {
     case *ast.Program:
-        return evalProgram(node)
+        return evalProgram(node, env)
+
+    case *ast.LetStatement:
+        val := Eval(node.Value, env)
+        if isError(val) {
+            return val
+        }
+        env.Set(node.Name.Value, val)
 
     case *ast.ReturnStatement:
-        val := Eval(node.ReturnValue)
+        val := Eval(node.ReturnValue, env)
         if isError(val) {
             return val
         }
         return &object.ReturnValue{Value: val}
 
     case *ast.ExpressionStatement:
-        return Eval(node.Expression)
+        return Eval(node.Expression, env)
 
     case *ast.BlockStatement:
-        return evalBlockStatement(node)
+        return evalBlockStatement(node, env)
 
     case *ast.IntegerLiteral:
         return &object.Integer{Value: node.Value}
+
+    case *ast.Identifier:
+        val, ok := env.Get(node.Value)
+        if !ok {
+            return newError("identifier not found: " + node.Value)
+        }
+        return val
 
     case *ast.Boolean:
         if node.Value {
@@ -40,34 +54,34 @@ func Eval(node ast.Node) object.Object {
         return FALSE
 
     case *ast.IfExpression:
-        cond := Eval(node.Cond)
+        cond := Eval(node.Cond, env)
         if isError(cond) {
             return cond
         }
 
         if isTruthly(cond) {
-            return Eval(node.Cons)
+            return Eval(node.Cons, env)
         } else {
             if node.Alt != nil {
-                return Eval(node.Alt)
+                return Eval(node.Alt, env)
             }
         }
         return NULL
 
     case *ast.PrefixExpression:
-        right := Eval(node.Right)
+        right := Eval(node.Right, env)
         if isError(right) {
             return right
         }
         return evalPrefixExpression(node.Operator, right)
 
     case *ast.InfixExpression:
-        left := Eval(node.Left)
+        left := Eval(node.Left, env)
         if isError(left) {
             return left
         }
 
-        right := Eval(node.Right)
+        right := Eval(node.Right, env)
         if isError(right) {
             return right
         }
@@ -79,11 +93,11 @@ func Eval(node ast.Node) object.Object {
     return nil
 }
 
-func evalProgram(program *ast.Program) object.Object {
+func evalProgram(program *ast.Program, env *object.Env) object.Object {
     var res object.Object
 
     for _, stmt := range program.Statements {
-        res = Eval(stmt)
+        res = Eval(stmt, env)
 
         switch res := res.(type) {
         case *object.ReturnValue:
@@ -96,11 +110,11 @@ func evalProgram(program *ast.Program) object.Object {
     return res
 }
 
-func evalBlockStatement(bs *ast.BlockStatement) object.Object {
+func evalBlockStatement(bs *ast.BlockStatement, env *object.Env) object.Object {
     var res object.Object
 
     for _, stmt := range bs.Statements {
-        res = Eval(stmt)
+        res = Eval(stmt, env)
 
         if res != nil {
             rt := res.Type()
