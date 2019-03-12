@@ -191,7 +191,7 @@ func TestLetStatement(t *testing.T) {
     }
 
     for _, test := range tests {
-        testIntegerObject(t, testEval(test.input), int64(test.expected))
+        testIntegerObject(t, testEval(test.input), test.expected)
     }
 }
 
@@ -215,6 +215,27 @@ func TestFunctionObject(t *testing.T) {
     expectedBody := "(x + 2)"
     if fn.Body.String() != expectedBody {
         t.Fatalf("incorrect body value")
+    }
+}
+
+func TestFunctionApplication(t *testing.T) {
+    tests := []struct {
+        input string
+        expected int64
+    }{
+        {"let id = fn(x) { x; }; id(5);", 5},
+        {"let id = fn(x) { return x; }; id(5);", 5},
+        {"let double = fn(x) { x * 2; }; double(5);", 10},
+        {"let id = fn(x) { x; }; id(5);", 5},
+        {"let add = fn(x, y) { x + y; }; add(5, 10);", 15},
+        {"let add = fn(x, y) { x + y; }; add(5+5, add(5,5));", 20},
+        {"fn(x) { x; }(5)", 5},
+        {"let i = 5; let p = fn(i) { i; }; p(10); i;", 5},
+        {"let i = 5; let p = fn(i) { i; }; i; p(10);", 10},
+    }
+
+    for _, test := range tests {
+        testIntegerObject(t, testEval(test.input), test.expected)
     }
 }
 

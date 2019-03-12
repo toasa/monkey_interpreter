@@ -50,6 +50,18 @@ func Eval(node ast.Node, env *object.Env) object.Object {
     case *ast.FunctionLiteral:
         return &object.Function{Params: node.Params, Body: node.Body, Env: env}
 
+    case *ast.FunctionCall:
+        f := Eval(node.Func, env)
+        if isError(f) {
+            return f
+        }
+        args := evalExpressions(node.Args, env)
+        if len(args) == 1 && isError(args[0]) {
+            return args[0]
+        }
+
+        return applyFunction(f, args)
+
     case *ast.Boolean:
         if node.Value {
             return TRUE
@@ -129,6 +141,18 @@ func evalBlockStatement(bs *ast.BlockStatement, env *object.Env) object.Object {
     return res
 }
 
+func evalExpressions(exps []ast.Expression, env *object.Env) []object.Object {
+    args := []object.Object{}
+    for _, exp := range exps {
+        evaled := Eval(exp, env)
+        if isError(evaled) {
+            return []object.Object{evaled}
+        }
+        args = append(args, evaled)
+    }
+    return args
+}
+
 func evalPrefixExpression(op string, right object.Object) object.Object {
     if (op == "!") {
         return evalBangOperatorExpression(right)
@@ -175,13 +199,6 @@ func evalIntegerInfixExpression(op string, left, right object.Object) object.Obj
     }
 }
 
-func nativeBoolToBooleanObject(b bool) object.Object {
-    if b {
-        return TRUE
-    }
-    return FALSE
-}
-
 func evalBangOperatorExpression(exp object.Object) object.Object {
     switch exp {
     case TRUE:
@@ -203,6 +220,45 @@ func evalMinusPrefixOperatorExpression(exp object.Object) object.Object {
 
     i.Value = -i.Value
     return i
+}
+
+func applyFunction(fn object.Object, args []object.Object) object.Object {
+    f, ok := fn.(*object.Function)
+    if !ok {
+        return newError("not a function: %s", fn.Type())
+    }
+
+    extendedEnv := extendFunctionEnv(f, args)
+    evaled := Eval(f.Body, extendedEnv)
+    return unwrapReturnValue(evaled)
+}
+
+func extendFunctionEnv(f *object.Function, args []object.Object) *object.Env {
+    // f.Envに包まれた新しい環境envを生成
+    env := object.NewEnclosedEnv(f.Env)
+
+    // 新しい環境envに引数の名前と値をsetする
+    for i, param := range f.Params {
+        env.Set(param.Value, args[i])
+    }
+
+    // f.Envに包まれた小さな環境envを返す
+    return env
+}
+
+func unwrapReturnValue(obj object.Object) object.Object {
+    if rv, ok := obj.(*object.ReturnValue); ok {
+        return rv.Value
+    }
+
+    return obj
+}
+
+func nativeBoolToBooleanObject(b bool) object.Object {
+    if b {
+        return TRUE
+    }
+    return FALSE
 }
 
 func isTruthly(cond object.Object) bool {
