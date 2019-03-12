@@ -1,6 +1,7 @@
 package eval
 
 import (
+    "fmt"
     "monkey_interpreter/ast"
     "monkey_interpreter/object"
 )
@@ -66,8 +67,12 @@ func evalProgram(program *ast.Program) object.Object {
 
     for _, stmt := range program.Statements {
         res = Eval(stmt)
-        if rv, ok := res.(*object.ReturnValue); ok {
-            return rv.Value
+
+        switch res := res.(type) {
+        case *object.ReturnValue:
+            return res.Value
+        case *object.Error:
+            return res
         }
     }
 
@@ -80,8 +85,11 @@ func evalBlockStatement(bs *ast.BlockStatement) object.Object {
     for _, stmt := range bs.Statements {
         res = Eval(stmt)
 
-        if res != nil && res.Type() == object.RETURN_VALUE_OBJ {
-            return res
+        if res != nil {
+            rt := res.Type()
+            if rt == object.RETURN_VALUE_OBJ || rt == object.ERROR_OBJ {
+                return res
+            }
         }
     }
     return res
@@ -94,39 +102,47 @@ func evalPrefixExpression(op string, right object.Object) object.Object {
     if (op == "-") {
         return evalMinusPrefixOperatorExpression(right)
     }
-    return NULL
+    return newError("unknown operator: %s%s", op, right.Type())
 }
 
 func evalInfixExpression(op string, left, right object.Object) object.Object {
+    switch {
+    case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
+        return evalIntegerInfixExpression(op, left, right)
+    case left.Type() != right.Type():
+        return newError("type mismatch: %s %s %s", left.Type(), op, right.Type())
+    default:
+        return newError("unknown operator: %s %s %s", left.Type(), op, right.Type())
+    }
+}
+
+func evalIntegerInfixExpression(op string, left, right object.Object) object.Object {
     lval := left.(*object.Integer).Value
     rval := right.(*object.Integer).Value
-    if (op == "+" || op == "-" || op == "*" || op == "/") {
-        var val int64
-        if (op == "+") {
-            val = lval + rval
-        } else if (op == "-") {
-            val = lval - rval
-        } else if (op == "*") {
-            val = lval * rval
-        } else if (op == "/") {
-            val = lval / rval
-        }
-
-        return &object.Integer{Value: val}
+    switch op {
+    case "+":
+        return &object.Integer{Value: lval + rval}
+    case "-":
+        return &object.Integer{Value: lval - rval}
+    case "*":
+        return &object.Integer{Value: lval * rval}
+    case "/":
+        return &object.Integer{Value: lval / rval}
+    case "==":
+        return nativeBoolToBooleanObject(lval == rval)
+    case "!=":
+        return nativeBoolToBooleanObject(lval != rval)
+    case "<":
+        return nativeBoolToBooleanObject(lval < rval)
+    case ">":
+        return nativeBoolToBooleanObject(lval > rval)
+    default:
+        return newError("unknown operator: %s %s %s", left.Type(), op, right.Type())
     }
+}
 
-    var res bool
-    if (op == "==") {
-        res = (lval == rval)
-    } else if (op == "!=") {
-        res = (lval != rval)
-    } else if (op == "<") {
-        res = (lval < rval)
-    } else if (op == ">") {
-        res = (lval > rval)
-    }
-
-    if res {
+func nativeBoolToBooleanObject(b bool) object.Object {
+    if b {
         return TRUE
     }
     return FALSE
@@ -148,7 +164,7 @@ func evalBangOperatorExpression(exp object.Object) object.Object {
 func evalMinusPrefixOperatorExpression(exp object.Object) object.Object {
     i, ok := exp.(*object.Integer)
     if !ok {
-        return NULL
+        return newError("unknown operator: -%s", exp.Type())
     }
 
     i.Value = -i.Value
@@ -168,4 +184,8 @@ func isTruthly(cond object.Object) bool {
     default:
         return true
     }
+}
+
+func newError(format string, a ...interface{}) *object.Error {
+    return &object.Error{Msg: fmt.Sprintf(format, a...)}
 }
