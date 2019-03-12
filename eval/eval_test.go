@@ -195,6 +195,29 @@ func TestLetStatement(t *testing.T) {
     }
 }
 
+func TestFunctionObject(t *testing.T) {
+    input := "fn(x) { x + 2; };"
+
+    evaled := testEval(input)
+    fn, ok := evaled.(*object.Function)
+    if !ok {
+        t.Fatalf("object is not Function")
+    }
+
+    if len(fn.Params) != 1 {
+        t.Fatalf("length of Params is incorrect")
+    }
+
+    if fn.Params[0].Value != "x" {
+        t.Fatalf("incorrect params value")
+    }
+
+    expectedBody := "(x + 2)"
+    if fn.Body.String() != expectedBody {
+        t.Fatalf("incorrect body value")
+    }
+}
+
 func testEval(input string) object.Object {
     l := lexer.New(input)
     p := parser.New(l)

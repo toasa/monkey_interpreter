@@ -47,6 +47,9 @@ func Eval(node ast.Node, env *object.Env) object.Object {
         }
         return val
 
+    case *ast.FunctionLiteral:
+        return &object.Function{Params: node.Params, Body: node.Body, Env: env}
+
     case *ast.Boolean:
         if node.Value {
             return TRUE
