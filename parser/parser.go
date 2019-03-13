@@ -203,7 +203,7 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 func (p *Parser) parseExpression(precedence int) ast.Expression {
     pre_fn := p.prefixParseFns[p.curToken.Type]
     if pre_fn == nil {
-        msg := "not fonnd prefix parse function"
+        msg := "not found prefix parse function"
         p.errors = append(p.errors, msg)
         return nil
     }
