@@ -44,6 +44,7 @@ func Eval(node ast.Node, env *object.Env) object.Object {
         return &object.String{Value: node.Value}
 
     case *ast.Identifier:
+
         if val, ok := env.Get(node.Value); ok {
             return val
         }
@@ -89,6 +90,12 @@ func Eval(node ast.Node, env *object.Env) object.Object {
             }
         }
         return NULL
+
+    case *ast.ArrayLiteral:
+        a := &object.Array{}
+        elems := evalExpressions(node.Elems, env)
+        a.Elems = elems
+        return a
 
     case *ast.PrefixExpression:
         right := Eval(node.Right, env)

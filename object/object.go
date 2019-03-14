@@ -17,6 +17,7 @@ const (
     RETURN_VALUE_OBJ = "RETURN_VALUE"
     FUNCTION_OBJ = "FUNCTION"
     BUILTIN_OBJ = "BUILTIN"
+    ARRAY_OBJ = "ARRAY"
     ERROR_OBJ = "ERROR"
 )
 
@@ -128,4 +129,26 @@ func (b *Builtin) Type() ObjectType{
 }
 func (b *Builtin) Inspect() string {
     return "builtin function"
+}
+
+type Array struct {
+    Elems []Object
+}
+
+func (a *Array) Type() ObjectType {
+    return ARRAY_OBJ
+}
+func (a *Array) Inspect() string {
+    var out bytes.Buffer
+
+    out.WriteString("[")
+    for i, e := range a.Elems {
+        out.WriteString(e.Inspect())
+        if (i + 1 != len(a.Elems)) {
+            out.WriteString(", ")
+        }
+    }
+    out.WriteString("]")
+
+    return out.String()
 }

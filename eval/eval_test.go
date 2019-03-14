@@ -305,6 +305,19 @@ func TestBuiltinFunctions(t *testing.T) {
     }
 }
 
+func TestArrayLiterals(t *testing.T) {
+    input := "[1, 2 * 2, 3 + 3]"
+    evaled := testEval(input)
+    a, ok := evaled.(*object.Array)
+    if !ok {
+        t.Errorf("type assertion error")
+        return
+    }
+    testIntegerObject(t, a.Elems[0], int64(1))
+    testIntegerObject(t, a.Elems[1], int64(4))
+    testIntegerObject(t, a.Elems[2], int64(6))
+}
+
 func testEval(input string) object.Object {
     l := lexer.New(input)
     p := parser.New(l)
