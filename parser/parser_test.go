@@ -161,6 +161,25 @@ func TestIntegerLiteralExpression(t *testing.T) {
     }
 }
 
+func TestStringLiteralExpression(t *testing.T) {
+    input := `"hello world";`
+
+    l := lexer.New(input)
+    p := New(l)
+    program := p.ParseProgram()
+    checkParserErrors(t, p)
+
+    stmt := program.Statements[0].(*ast.ExpressionStatement)
+    sl, ok := stmt.Expression.(*ast.StringLiteral)
+    if !ok {
+        t.Fatalf("incorrect type assertion")
+    }
+
+    if sl.Value != "hello world" {
+        t.Errorf("expected hello world, but got %s", sl.Value)
+    }
+}
+
 func TestBooleanExpression(t *testing.T) {
     tests := []struct {
         input string

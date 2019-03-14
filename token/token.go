@@ -9,6 +9,7 @@ type Token struct {
 
 const (
     // TokenTypeの種類
+    
     ILLGAL = "ILLGAL"
     EOF = "EOF"
 
