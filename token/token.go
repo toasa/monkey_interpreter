@@ -9,7 +9,7 @@ type Token struct {
 
 const (
     // TokenTypeの種類
-    
+
     ILLGAL = "ILLGAL"
     EOF = "EOF"
 
@@ -36,6 +36,8 @@ const (
     RPAREN = ")"
     LBRACE = "{"
     RBRACE = "}"
+    LBRACKET = "["
+    RBRACKET = "]"
 
     EQ = "=="
     NQ = "!="
