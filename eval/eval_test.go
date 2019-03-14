@@ -239,6 +239,20 @@ func TestFunctionApplication(t *testing.T) {
     }
 }
 
+func TestStringLiteral(t *testing.T) {
+    test := `"howdy? toasa."`
+    evaled := testEval(test)
+
+    s, ok := evaled.(*object.String)
+    if !ok {
+        t.Errorf("type assertion error")
+    }
+
+    if s.Value != "howdy? toasa." {
+        t.Errorf("expected howdy? toasa. but got %s", s.Value)
+    }
+}
+
 func testEval(input string) object.Object {
     l := lexer.New(input)
     p := parser.New(l)
