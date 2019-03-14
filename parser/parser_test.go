@@ -521,6 +521,28 @@ func TestParsingArrayLiterals(t *testing.T) {
     testInfixExpression(t, al.Elems[2], 3, "+", 3)
 }
 
+func TestParsingIndexExpressions(t *testing.T) {
+    input := "arr[1 + 1]"
+
+    l := lexer.New(input)
+    p := New(l)
+    program := p.ParseProgram()
+    checkParserErrors(t, p)
+
+    stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+    ie, ok := stmt.Expression.(*ast.IndexExpression)
+    if !ok {
+        t.Fatalf("invalid assertion error")
+    }
+
+    if !testIdentifier(t, ie.Left, "arr") {
+        return
+    }
+    if !testInfixExpression(t, ie.Index, 1, "+", 1) {
+        return
+    }
+}
+
 func testIntegerLiteral(t *testing.T, exp ast.Expression, val int64) bool {
     il, ok := exp.(*ast.IntegerLiteral)
     if !ok {
@@ -706,6 +728,14 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
         {
             "add(a + b + c * d / f + g)",
             "add((((a + b) + ((c * d) / f)) + g))",
+        },
+        {
+            "a * [1, 2, 3, 4][b * c] * d",
+            "((a * ([1, 2, 3, 4][(b * c)])) * d)",
+        },
+        {
+            "add(a * b[2], b[1], 2 * [1, 2][1])",
+            "add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))",
         },
     }
 

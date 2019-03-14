@@ -33,6 +33,7 @@ const (
     PRODUCT // *
     PREFIX // -x or !x
     CALL // func(x)
+    INDEX // arr[index]
 )
 
 var precedences = map[token.TokenType]int {
@@ -46,6 +47,7 @@ var precedences = map[token.TokenType]int {
     token.DIV: PRODUCT,
     // 中置記法としての`(`. 関数呼び出しに用いられる
     token.LPAREN: CALL,
+    token.LBRACKET: INDEX,
 }
 
 func New(l *lexer.Lexer) *Parser {
@@ -84,6 +86,7 @@ func New(l *lexer.Lexer) *Parser {
     // addはprefixのIdentifierとしてparseされ、
     // `(`が来て、引数2へと続く。つまり`(`を中置記号とも見なせる
     p.registerInfix(token.LPAREN, p.parseFunctionCall)
+    p.registerInfix(token.LBRACKET, p.parseIndexExpression)
 
     p.nextToken()
     p.nextToken()
@@ -203,9 +206,10 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 }
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {
+
     pre_fn := p.prefixParseFns[p.curToken.Type]
     if pre_fn == nil {
-        msg := "not found prefix parse function"
+        msg := "not found prefix parse function" + fmt.Sprintf(" curToken: %s", p.curToken.Literal)
         p.errors = append(p.errors, msg)
         return nil
     }
@@ -346,6 +350,16 @@ func (p *Parser) parseArrayLiteral() ast.Expression {
     array := &ast.ArrayLiteral{Token: p.curToken}
     array.Elems = p.parseExpressionList(token.RBRACKET)
     return array
+}
+
+func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
+    ie := &ast.IndexExpression{Token: p.curToken, Left: left}
+    p.nextToken()
+    ie.Index = p.parseExpression(LOWEST)
+
+    p.expectPeep(token.RBRACKET)
+
+    return ie
 }
 
 func (p *Parser) parseExpressionList(end token.TokenType) []ast.Expression {
