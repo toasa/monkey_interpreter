@@ -208,10 +208,16 @@ func evalStringInfixExpression(op string, left, right object.Object) object.Obje
     lStr := left.(*object.String).Value
     rStr := right.(*object.String).Value
 
-    if (op == "+") {
+    switch op {
+    case "+":
         return &object.String{Value: lStr + rStr}
+    case "==":
+        return nativeBoolToBooleanObject(lStr == rStr)
+    case "!=":
+        return nativeBoolToBooleanObject(lStr != rStr)
+    default:
+        return newError("unknown operator: %s %s %s", left.Type(), op, right.Type())
     }
-    return newError("unknown operator: %s %s %s", left.Type(), op, right.Type())
 }
 
 func evalBangOperatorExpression(exp object.Object) object.Object {
