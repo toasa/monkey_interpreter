@@ -14,6 +14,7 @@ const (
 
     // ident, literal
     IDENT = "IDENT" // add, foo, x, y,
+    STRING = "STRING"
     INT = "INT" // 46
 
     // operator

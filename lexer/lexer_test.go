@@ -25,6 +25,8 @@ func TestNextToken(t *testing.T) {
 
     10 == 10;
     10 != 9;
+    "toasa"
+    "rom bom"
     `
     tests := []struct {
         expectedType token.TokenType
@@ -103,6 +105,9 @@ func TestNextToken(t *testing.T) {
         {token.NQ, "!="},
         {token.INT, "9"},
         {token.SEMICOLON, ";"},
+        {token.STRING, "toasa"},
+        {token.STRING, "rom bom"},
+        {token.EOF, ""},
     }
 
     var l *Lexer = New(input)
