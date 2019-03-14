@@ -44,11 +44,15 @@ func Eval(node ast.Node, env *object.Env) object.Object {
         return &object.String{Value: node.Value}
 
     case *ast.Identifier:
-        val, ok := env.Get(node.Value)
-        if !ok {
-            return newError("identifier not found: " + node.Value)
+        if val, ok := env.Get(node.Value); ok {
+            return val
         }
-        return val
+
+        if b, ok := builtins[node.Value]; ok {
+            return b
+        }
+
+        return newError("identifier not found: " + node.Value)
 
     case *ast.FunctionLiteral:
         return &object.Function{Params: node.Params, Body: node.Body, Env: env}
@@ -244,14 +248,17 @@ func evalMinusPrefixOperatorExpression(exp object.Object) object.Object {
 }
 
 func applyFunction(fn object.Object, args []object.Object) object.Object {
-    f, ok := fn.(*object.Function)
-    if !ok {
+
+    switch fn := fn.(type) {
+    case *object.Function:
+        extendedEnv := extendFunctionEnv(fn, args)
+        evaled := Eval(fn.Body, extendedEnv)
+        return unwrapReturnValue(evaled)
+    case *object.Builtin:
+        return fn.Fn(args...)
+    default:
         return newError("not a function: %s", fn.Type())
     }
-
-    extendedEnv := extendFunctionEnv(f, args)
-    evaled := Eval(f.Body, extendedEnv)
-    return unwrapReturnValue(evaled)
 }
 
 func extendFunctionEnv(f *object.Function, args []object.Object) *object.Env {
