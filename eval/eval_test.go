@@ -162,6 +162,10 @@ func TestErrorHandling(t *testing.T) {
             "foo",
             "identifier not found: foo",
         },
+        {
+            `"Hello" - "World"`,
+            "unknown operator: STRING - STRING",
+        },
     }
 
     for _, test := range tests {
@@ -250,6 +254,20 @@ func TestStringLiteral(t *testing.T) {
 
     if s.Value != "howdy? toasa." {
         t.Errorf("expected howdy? toasa. but got %s", s.Value)
+    }
+}
+
+func TestStringConcatenation(t *testing.T) {
+    input := `"Howdy?" + " " + "toasa"`
+    evaled := testEval(input)
+
+    s, ok := evaled.(*object.String)
+    if !ok {
+        t.Errorf("type assertion error")
+    }
+
+    if s.Value != "Howdy? toasa" {
+        t.Errorf("expected Hoydy? toasa but got %s", s.Value)
     }
 }
 
