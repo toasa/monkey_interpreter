@@ -498,6 +498,29 @@ func TestFunctionCallParsing(t *testing.T) {
     testInfixExpression(t, fc.Args[2], 4, "+", 5)
 }
 
+func TestParsingArrayLiterals(t *testing.T) {
+    input := "[1, 2 * 2, 3 + 3]"
+
+    l := lexer.New(input)
+    p := New(l)
+    program := p.ParseProgram()
+    checkParserErrors(t, p)
+
+    stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+    al, ok := stmt.Expression.(*ast.ArrayLiteral)
+    if !ok {
+        t.Fatalf("invalid assertion error")
+    }
+
+    if len(al.Elems) != 3 {
+        t.Fatalf("len not 3")
+    }
+
+    testIntegerLiteral(t, al.Elems[0], int64(1))
+    testInfixExpression(t, al.Elems[1], 2, "*", 2)
+    testInfixExpression(t, al.Elems[2], 3, "+", 3)
+}
+
 func testIntegerLiteral(t *testing.T, exp ast.Expression, val int64) bool {
     il, ok := exp.(*ast.IntegerLiteral)
     if !ok {
@@ -506,7 +529,7 @@ func testIntegerLiteral(t *testing.T, exp ast.Expression, val int64) bool {
     }
 
     if il.Value != val {
-        t.Fatalf("error")
+        t.Fatalf("%d expected, but got %d", val, il.Value)
         return false
     }
 

@@ -311,3 +311,27 @@ func (fc *FunctionCall) String() string {
 
     return out.String()
 }
+
+type ArrayLiteral struct {
+    Token token.Token
+    Elems []Expression
+}
+
+func (al *ArrayLiteral) expressionNode() {}
+func (al *ArrayLiteral) TokenLiteral() string {
+    return al.Token.Literal
+}
+func (al *ArrayLiteral) String() string {
+    var out bytes.Buffer
+
+    out.WriteString("[")
+    for i, arg := range al.Elems {
+        out.WriteString(arg.String())
+        if len(al.Elems) > 1 && i + 1 != len(al.Elems) {
+            out.WriteString(", ")
+        }
+    }
+    out.WriteString("]")
+
+    return out.String()
+}
