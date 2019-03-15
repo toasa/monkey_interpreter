@@ -543,6 +543,103 @@ func TestParsingIndexExpressions(t *testing.T) {
     }
 }
 
+func TestParsingHashLiteralsStringKeys(t *testing.T) {
+    input := `{"one": 1, "two": 2, "three": 3}`
+
+    l := lexer.New(input)
+    p := New(l)
+    program := p.ParseProgram()
+    checkParserErrors(t, p)
+
+    stmt := program.Statements[0].(*ast.ExpressionStatement)
+    hl, ok := stmt.Expression.(*ast.HashLiteral)
+    if !ok {
+        t.Fatalf("type assertion error")
+    }
+
+    if len(hl.Pairs) != 3 {
+        t.Errorf("hl.Pairs length expected 3, but got %d", len(hl.Pairs))
+    }
+
+    expected := map[string]int64 {
+        "one": 1,
+        "two": 2,
+        "three": 3,
+    }
+
+    for key, val := range hl.Pairs {
+
+        sl, ok := key.(*ast.StringLiteral)
+        if !ok {
+            t.Errorf("type assertion error")
+        }
+
+        testIntegerLiteral(t, val, expected[sl.Value])
+    }
+}
+
+func TestParsingEmptyHashLiteral(t *testing.T) {
+    input := `{}`
+
+    l := lexer.New(input)
+    p := New(l)
+    program := p.ParseProgram()
+    checkParserErrors(t, p)
+
+    stmt := program.Statements[0].(*ast.ExpressionStatement)
+    hl, ok := stmt.Expression.(*ast.HashLiteral)
+
+    if !ok {
+        t.Fatalf("type assertion error")
+    }
+
+    if len(hl.Pairs) != 0 {
+        t.Errorf("hl.Pairs length expected 0, but got %d", len(hl.Pairs))
+    }
+}
+
+func TestParsingHashLiteralsWithExpressions(t *testing.T) {
+    input := `{"one": 0 + 1, "two": 4 - 2, "three": 15 / 5}`
+
+    l := lexer.New(input)
+    p := New(l)
+    program := p.ParseProgram()
+    checkParserErrors(t, p)
+
+    stmt := program.Statements[0].(*ast.ExpressionStatement)
+    hl, ok := stmt.Expression.(*ast.HashLiteral)
+    if !ok {
+        t.Fatalf("type assertion error")
+    }
+
+    if len(hl.Pairs) != 3 {
+        t.Errorf("hl.Pairs length expected 3, but got %d", len(hl.Pairs))
+    }
+
+    tests := map[string]func(ast.Expression) {
+        "one": func(e ast.Expression) {
+            testInfixExpression(t, e, 0, "+", 1)
+        },
+        "two": func(e ast.Expression) {
+            testInfixExpression(t, e, 4, "-", 2)
+        },
+        "three": func(e ast.Expression) {
+            testInfixExpression(t, e, 15, "/", 5)
+        },
+    }
+
+    for key, val := range hl.Pairs {
+        sl, ok := key.(*ast.StringLiteral)
+        f, ok := tests[sl.Value]
+        if !ok {
+            t.Errorf("not found function")
+            continue
+        }
+
+        f(val)
+    }
+}
+
 func testIntegerLiteral(t *testing.T, exp ast.Expression, val int64) bool {
     il, ok := exp.(*ast.IntegerLiteral)
     if !ok {

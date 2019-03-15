@@ -2,6 +2,7 @@ package ast
 
 import (
     "bytes"
+    "strings"
     "monkey_interpreter/token"
 )
 
@@ -358,4 +359,30 @@ func (ie *IndexExpression) String() string {
     out.WriteString(")")
 
     return out .String()
+}
+
+type HashLiteral struct {
+    // {<expression>: <expression>, <expression>: <expression>, ...}
+    Token token.Token
+    Pairs map[Expression]Expression
+}
+
+func (hl *HashLiteral) expressionNode() {}
+func (hl *HashLiteral) TokenLiteral() string {
+    return hl.Token.Literal
+}
+func (hl *HashLiteral) String() string {
+    var out bytes.Buffer
+
+    out.WriteString("{")
+
+    pairs := []string{}
+    for key, val := range hl.Pairs {
+        pairs = append(pairs, key.String() + ":" + val.String())
+    }
+    out.WriteString(strings.Join(pairs, ", "))
+
+    out.WriteString("}")
+
+    return out.String()
 }
