@@ -97,6 +97,25 @@ func Eval(node ast.Node, env *object.Env) object.Object {
         a.Elems = elems
         return a
 
+    case *ast.IndexExpression:
+        left := Eval(node.Left, env)
+        index := Eval(node.Index, env)
+
+        arr, ok := left.(*object.Array)
+        if !ok {
+            return newError("type assertion error")
+        }
+        i, ok := index.(*object.Integer)
+        if !ok {
+            return newError("type assertion error")
+        }
+
+        if i.Value < 0 || len(arr.Elems) <= int(i.Value) {
+            return NULL
+        }
+
+        return arr.Elems[i.Value]
+
     case *ast.PrefixExpression:
         right := Eval(node.Right, env)
         if isError(right) {
