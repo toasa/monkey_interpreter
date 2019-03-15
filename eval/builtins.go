@@ -38,4 +38,23 @@ var builtins = map[string]*object.Builtin {
             }
         },
     },
+    "last": &object.Builtin {
+        Fn: func(args ...object.Object) object.Object {
+            l := len(args)
+            if l != 1 {
+                return newError("wrong number of arguments. got=%d, want=1", l)
+            }
+
+            switch arg := args[0].(type) {
+            case *object.Array:
+                if len(arg.Elems) == 0 {
+                    return NULL
+                } else {
+                    return arg.Elems[len(arg.Elems) - 1]
+                }
+            default:
+                return newError("argument to `last` not supported, got %s", arg.Type())
+            }
+        },
+    },
 }
