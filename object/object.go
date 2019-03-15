@@ -19,6 +19,7 @@ const (
     FUNCTION_OBJ = "FUNCTION"
     BUILTIN_OBJ = "BUILTIN"
     ARRAY_OBJ = "ARRAY"
+    HASH_OBJ = "HASH"
     ERROR_OBJ = "ERROR"
 )
 
@@ -159,6 +160,10 @@ type HashKey struct {
     Value uint64
 }
 
+type Hashable interface {
+    HashKey() HashKey
+}
+
 func (b *Boolean) HashKey() HashKey {
     var val uint64
     if b.Value {
@@ -169,13 +174,36 @@ func (b *Boolean) HashKey() HashKey {
 
     return HashKey{Type: BOOLEAN_OBJ, Value: val}
 }
-
 func (i *Integer) HashKey() HashKey {
     return HashKey{Type: INTEGER_OBJ, Value: uint64(i.Value)}
 }
-
 func (s *String) HashKey() HashKey {
     h := fnv.New64a()
     h.Write([]byte(s.Value))
     return HashKey{Type: STRING_OBJ, Value: h.Sum64()}
+}
+
+type HashPair struct {
+    Key Object
+    Value Object
+}
+
+type Hash struct {
+    Pairs map[HashKey]HashPair
+}
+
+func (h *Hash) Type() ObjectType { return HASH_OBJ }
+func (h *Hash) Inspect() string {
+    var out bytes.Buffer
+    out.WriteString("{")
+
+    pairs := []string{}
+    for _, pair := range h.Pairs {
+        pairs = append(pairs, fmt.Sprintf("%s: %s", pair.Key.Inspect(), pair.Value.Inspect()))
+    }
+    out.WriteString(strings.Join(pairs, ", "))
+
+    out.WriteString("}")
+
+    return out.String()
 }

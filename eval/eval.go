@@ -116,6 +116,24 @@ func Eval(node ast.Node, env *object.Env) object.Object {
 
         return arr.Elems[i.Value]
 
+    case *ast.HashLiteral:
+        pairs := map[object.HashKey]object.HashPair{}
+        for key, val := range node.Pairs {
+            key_evaled := Eval(key, env)
+
+            hasha, ok := key_evaled.(object.Hashable)
+            if !ok {
+                return newError("hash keys %s doesn't have Hashkey()", key_evaled.Type())
+            }
+            hk := hasha.HashKey()
+
+            hp := object.HashPair{Key: key_evaled, Value: Eval(val, env)}
+            pairs[hk] = hp
+        }
+
+        h := &object.Hash{Pairs: pairs}
+        return h
+
     case *ast.PrefixExpression:
         right := Eval(node.Right, env)
         if isError(right) {

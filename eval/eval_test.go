@@ -372,6 +372,46 @@ func TestArrayIndexExpressions(t *testing.T) {
     }
 }
 
+func TestHashLiteral(t *testing.T) {
+    input := `let two = "two";
+    {
+        "one": 10 - 9,
+        two: 1 + 1,
+        "thr" + "ee": 6/ 2,
+        4: 4,
+        true: 5,
+        false: 6,
+    }`
+
+    evaled := testEval(input)
+    h, ok := evaled.(*object.Hash)
+    if !ok {
+        t.Fatalf("Eval didn't return Hash")
+    }
+
+    expected := map[object.HashKey]int64 {
+        (&object.String{Value: "one"}).HashKey(): 1,
+        (&object.String{Value: "two"}).HashKey(): 2,
+        (&object.String{Value: "three"}).HashKey(): 3,
+        (&object.Integer{Value: 4}).HashKey(): 4,
+        (&object.Boolean{Value: true}).HashKey(): 5,
+        (&object.Boolean{Value: false}).HashKey(): 6,
+    }
+
+    if len(h.Pairs) != len(expected) {
+        t.Fatalf("Hash has wrong num of pairs")
+    }
+
+    for expectedKey, expectedVal := range expected {
+        pair, ok := h.Pairs[expectedKey]
+        if !ok {
+            t.Errorf("no pair for given key")
+        }
+
+        testIntegerObject(t, pair.Value, expectedVal)
+    }
+}
+
 func testEval(input string) object.Object {
     l := lexer.New(input)
     p := parser.New(l)
