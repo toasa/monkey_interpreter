@@ -100,21 +100,7 @@ func Eval(node ast.Node, env *object.Env) object.Object {
     case *ast.IndexExpression:
         left := Eval(node.Left, env)
         index := Eval(node.Index, env)
-
-        arr, ok := left.(*object.Array)
-        if !ok {
-            return newError("type assertion error")
-        }
-        i, ok := index.(*object.Integer)
-        if !ok {
-            return newError("type assertion error")
-        }
-
-        if i.Value < 0 || len(arr.Elems) <= int(i.Value) {
-            return NULL
-        }
-
-        return arr.Elems[i.Value]
+        return evalIndexExpression(left, index)
 
     case *ast.HashLiteral:
         pairs := map[object.HashKey]object.HashPair{}
@@ -289,6 +275,44 @@ func evalMinusPrefixOperatorExpression(exp object.Object) object.Object {
 
     i.Value = -i.Value
     return i
+}
+
+func evalArrayIndexExpression(left, index object.Object) object.Object {
+    arr := left.(*object.Array)
+    i := index.(*object.Integer)
+
+    if i.Value < 0 || len(arr.Elems) <= int(i.Value) {
+        return NULL
+    }
+
+    return arr.Elems[i.Value]
+}
+
+func evalHashIndexExpression(left, index object.Object) object.Object {
+    h := left.(*object.Hash)
+
+    key, ok := index.(object.Hashable)
+    if !ok {
+        return newError("unusable as hash key: %s", index.Type())
+    }
+
+    pair, ok := h.Pairs[key.HashKey()]
+    if !ok {
+        return NULL
+    }
+
+    return pair.Value
+}
+
+func evalIndexExpression(left, index object.Object) object.Object {
+
+    if left.Type() == object.ARRAY_OBJ && index.Type() == object.INTEGER_OBJ {
+        return evalArrayIndexExpression(left, index)
+    } else if left.Type() == object.HASH_OBJ {
+        return evalHashIndexExpression(left, index)
+    }
+
+    return newError("index operator not supported: %s", left.Type())
 }
 
 func applyFunction(fn object.Object, args []object.Object) object.Object {
