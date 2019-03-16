@@ -103,22 +103,7 @@ func Eval(node ast.Node, env *object.Env) object.Object {
         return evalIndexExpression(left, index)
 
     case *ast.HashLiteral:
-        pairs := map[object.HashKey]object.HashPair{}
-        for key, val := range node.Pairs {
-            key_evaled := Eval(key, env)
-
-            hasha, ok := key_evaled.(object.Hashable)
-            if !ok {
-                return newError("hash keys %s doesn't have Hashkey()", key_evaled.Type())
-            }
-            hk := hasha.HashKey()
-
-            hp := object.HashPair{Key: key_evaled, Value: Eval(val, env)}
-            pairs[hk] = hp
-        }
-
-        h := &object.Hash{Pairs: pairs}
-        return h
+        return evalHashLiteral(node, env)
 
     case *ast.PrefixExpression:
         right := Eval(node.Right, env)
@@ -286,6 +271,27 @@ func evalArrayIndexExpression(left, index object.Object) object.Object {
     }
 
     return arr.Elems[i.Value]
+}
+
+func evalHashLiteral(hl *ast.HashLiteral, env *object.Env) object.Object {
+    
+    pairs := map[object.HashKey]object.HashPair{}
+
+    for key, val := range hl.Pairs {
+        key_evaled := Eval(key, env)
+
+        hasha, ok := key_evaled.(object.Hashable)
+        if !ok {
+            return newError("hash keys %s doesn't have Hashkey()", key_evaled.Type())
+        }
+        hk := hasha.HashKey()
+
+        hp := object.HashPair{Key: key_evaled, Value: Eval(val, env)}
+        pairs[hk] = hp
+    }
+
+    h := &object.Hash{Pairs: pairs}
+    return h
 }
 
 func evalHashIndexExpression(left, index object.Object) object.Object {
