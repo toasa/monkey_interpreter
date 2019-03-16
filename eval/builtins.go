@@ -1,6 +1,9 @@
 package eval
 
-import "monkey_interpreter/object"
+import (
+    "fmt"
+    "monkey_interpreter/object"
+)
 
 var builtins = map[string]*object.Builtin {
     "len": &object.Builtin {
@@ -92,6 +95,15 @@ var builtins = map[string]*object.Builtin {
 
             newArr = append(newArr, args[1])
             return &object.Array{Elems: newArr}
+        },
+    },
+    "puts": &object.Builtin {
+        Fn: func(args ...object.Object) object.Object {
+            for _, arg := range args {
+                fmt.Println(arg.Inspect())
+            }
+
+            return NULL
         },
     },
 }
