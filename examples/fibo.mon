@@ -1,10 +1,15 @@
-let count = 0;
-
 let fibo = fn(n) {
-    if (n > 1) {
+    if (n > 2) {
         return fibo(n - 1) + fibo(n - 2);
     }
     return 1;
 }
 
-puts(fibo(20))
+let fibo_print = fn(n, count) {
+    if (n < count) {
+        puts(fibo(n))
+        fibo_print(n+1, count)
+    }
+}
+
+fibo_print(1, 31)
